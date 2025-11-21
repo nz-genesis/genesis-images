@@ -1,0 +1,13 @@
+name: CI - Minimal checks
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: validate yaml
+        run: |
+          find .github -type f -name "*.yml" -print | xargs -r yamllint || true
+      - name: markdown lint
+        run: |
+          echo "skip"  # placeholder, add markdownlint step in repo-specific CI

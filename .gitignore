@@ -1,0 +1,9 @@
+# Generic
+*.env
+*.secret
+secrets/
+node_modules/
+.vscode/
+dist/
+__pycache__/
+*.pyc
