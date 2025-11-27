@@ -1,6 +1,6 @@
 # genesis-images
-Canonical repository for Genesis v70.0 — genesis-images.
-See project canonical docs in genesis-docs/ARCHITECTURE_OVERVIEW_v70.0.md.
+Canonical repository for Genesis v0.1.0 — genesis-images.
+See project canonical docs in genesis-docs/ARCHITECTURE_OVERVIEW_v0.1.0.md.
 
 ## Purpose
 Describe purpose, owners, how to run checks and where secrets live (Portainer Secrets / Vault).
