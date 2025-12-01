@@ -1,13 +1,23 @@
-name: CI - Minimal checks
-on: [push, pull_request]
+---
+name: CI Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
-  checks:
+  lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: validate yaml
-        run: |
-          find .github -type f -name "*.yml" -print | xargs -r yamllint || true
-      - name: markdown lint
-        run: |
-          echo "skip"  # placeholder, add markdownlint step in repo-specific CI
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run YAML linter
+        uses: ibm-cloud-security/secretsmanager-action@1.1.1
+        with:
+          command: lint
+          files: .github/workflows/
