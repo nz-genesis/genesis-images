@@ -43,7 +43,7 @@ jobs:
         if: success()
         uses: docker/build-push-action@v4
         with:
-          context: ./genesis-images/jina-clip
+          context: ./jina-clip
           push: true
           tags: |
             ghcr.io/nz-genesis/jina-clip:latest
@@ -54,7 +54,7 @@ jobs:
         if: success()
         uses: docker/build-push-action@v4
         with:
-          context: ./genesis-images/nz-litellm
+          context: ./nz-litellm
           push: true
           tags: |
             ghcr.io/nz-genesis/nz-litellm:latest
@@ -65,7 +65,7 @@ jobs:
         if: success()
         uses: docker/build-push-action@v4
         with:
-          context: ./genesis-images/nz-skill-runner
+          context: ./nz-skill-runner
           push: true
           tags: |
             ghcr.io/nz-genesis/nz-skill-runner:latest
