@@ -32,11 +32,11 @@ jobs:
           ls -la
           echo ""
           echo "Looking for genesis-images:"
-          if [ -d "genesis-images" ]; then
-            echo "genesis-images found!"
-            ls -la genesis-images/
+          if [ -d "jina-clip" ]; then
+            echo "jina-clip found!"
+            ls -la jina-clip/
           else
-            echo "genesis-images NOT found"
+            echo "jina-clip NOT found"
           fi
 
       - name: Build and push jina-clip
@@ -50,24 +50,24 @@ jobs:
             ghcr.io/nz-genesis/jina-clip:${{ github.sha }}
         continue-on-error: true
 
-      - name: Build and push nz-litellm
-        if: success()
-        uses: docker/build-push-action@v4
-        with:
-          context: ./nz-litellm
-          push: true
-          tags: |
-            ghcr.io/nz-genesis/nz-litellm:latest
-            ghcr.io/nz-genesis/nz-litellm:${{ github.sha }}
-        continue-on-error: true
+      # - name: Build and push nz-litellm
+      #   if: success()
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: ./nz-litellm
+      #     push: true
+      #     tags: |
+      #       ghcr.io/nz-genesis/nz-litellm:latest
+      #       ghcr.io/nz-genesis/nz-litellm:${{ github.sha }}
+      #   continue-on-error: true
 
-      - name: Build and push nz-skill-runner
-        if: success()
-        uses: docker/build-push-action@v4
-        with:
-          context: ./nz-skill-runner
-          push: true
-          tags: |
-            ghcr.io/nz-genesis/nz-skill-runner:latest
-            ghcr.io/nz-genesis/nz-skill-runner:${{ github.sha }}
-        continue-on-error: true
+      # - name: Build and push nz-skill-runner
+      #   if: success()
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: ./nz-skill-runner
+      #     push: true
+      #     tags: |
+      #       ghcr.io/nz-genesis/nz-skill-runner:latest
+      #       ghcr.io/nz-genesis/nz-skill-runner:${{ github.sha }}
+      #   continue-on-error: true
