@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir \
 # Clone Jina CLIP and convert to ONNX
 RUN git clone https://huggingface.co/jinaai/jina-clip-v2 /jina-model && \
     cd /jina-model && \
-    python -c "
+    python << 'PYTHON_SCRIPT'
 from optimum.onnxruntime import ORTModelForFeatureExtraction
 from transformers import AutoTokenizer
 
@@ -34,7 +34,7 @@ model.save_pretrained('/models/jina-clip-v2-onnx')
 tokenizer = AutoTokenizer.from_pretrained('jinaai/jina-clip-v2')
 tokenizer.save_pretrained('/models/jina-clip-v2-onnx')
 print('✅ ONNX model saved')
-"
+PYTHON_SCRIPT
 
 # Stage 2: Runtime
 FROM python:3.11-slim
