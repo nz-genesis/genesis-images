@@ -31,16 +31,16 @@ jobs:
           echo "Contents of repo:"
           ls -la
           echo ""
-          echo "Looking for genesis-images:"
-          if [ -d "jina-clip" ]; then
-            echo "jina-clip found!"
-            ls -la jina-clip/
-          else
-            echo "jina-clip NOT found"
-          fi
+          echo "Checking for services:"
+          for service in jina-clip nz-litellm nz-skill-runner; do
+            if [ -d "$service" ]; then
+              echo "✓ $service found"
+            else
+              echo "✗ $service NOT found"
+            fi
+          done
 
       - name: Build and push jina-clip
-        if: success()
         uses: docker/build-push-action@v4
         with:
           context: ./jina-clip
@@ -50,24 +50,22 @@ jobs:
             ghcr.io/nz-genesis/jina-clip:${{ github.sha }}
         continue-on-error: true
 
-      # - name: Build and push nz-litellm
-      #   if: success()
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     context: ./nz-litellm
-      #     push: true
-      #     tags: |
-      #       ghcr.io/nz-genesis/nz-litellm:latest
-      #       ghcr.io/nz-genesis/nz-litellm:${{ github.sha }}
-      #   continue-on-error: true
+      - name: Build and push nz-litellm
+        uses: docker/build-push-action@v4
+        with:
+          context: ./nz-litellm
+          push: true
+          tags: |
+            ghcr.io/nz-genesis/nz-litellm:latest
+            ghcr.io/nz-genesis/nz-litellm:${{ github.sha }}
+        continue-on-error: true
 
-      # - name: Build and push nz-skill-runner
-      #   if: success()
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     context: ./nz-skill-runner
-      #     push: true
-      #     tags: |
-      #       ghcr.io/nz-genesis/nz-skill-runner:latest
-      #       ghcr.io/nz-genesis/nz-skill-runner:${{ github.sha }}
-      #   continue-on-error: true
+      - name: Build and push nz-skill-runner
+        uses: docker/build-push-action@v4
+        with:
+          context: ./nz-skill-runner
+          push: true
+          tags: |
+            ghcr.io/nz-genesis/nz-skill-runner:latest
+            ghcr.io/nz-genesis/nz-skill-runner:${{ github.sha }}
+        continue-on-error: true
