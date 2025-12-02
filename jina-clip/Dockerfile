@@ -21,12 +21,11 @@ RUN pip install --no-cache-dir \
     pillow \
     numpy
 
-# Clone Jina CLIP and convert to ONNX
-RUN git clone https://huggingface.co/jinaai/jina-clip-v2 /jina-model && \
-    cd /jina-model && \
-    python << 'PYTHON_SCRIPT'
+# Create conversion script
+RUN mkdir -p /models && cat > /tmp/convert_jina.py << 'PYTHON'
 from optimum.onnxruntime import ORTModelForFeatureExtraction
 from transformers import AutoTokenizer
+import os
 
 print('Converting Jina CLIP v2 to ONNX...')
 model = ORTModelForFeatureExtraction.from_pretrained('jinaai/jina-clip-v2', export=True)
@@ -34,7 +33,12 @@ model.save_pretrained('/models/jina-clip-v2-onnx')
 tokenizer = AutoTokenizer.from_pretrained('jinaai/jina-clip-v2')
 tokenizer.save_pretrained('/models/jina-clip-v2-onnx')
 print('✅ ONNX model saved')
-PYTHON_SCRIPT
+PYTHON
+
+# Clone and convert
+RUN git clone https://huggingface.co/jinaai/jina-clip-v2 /tmp/jina-model && \
+    python /tmp/convert_jina.py && \
+    rm -rf /tmp/jina-model /tmp/convert_jina.py
 
 # Stage 2: Runtime
 FROM python:3.11-slim
