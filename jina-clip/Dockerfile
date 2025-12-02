@@ -27,7 +27,6 @@ RUN git clone https://huggingface.co/jinaai/jina-clip-v2 /jina-model && \
     python -c "
 from optimum.onnxruntime import ORTModelForFeatureExtraction
 from transformers import AutoTokenizer
-import torch
 
 print('Converting Jina CLIP v2 to ONNX...')
 model = ORTModelForFeatureExtraction.from_pretrained('jinaai/jina-clip-v2', export=True)
@@ -35,8 +34,7 @@ model.save_pretrained('/models/jina-clip-v2-onnx')
 tokenizer = AutoTokenizer.from_pretrained('jinaai/jina-clip-v2')
 tokenizer.save_pretrained('/models/jina-clip-v2-onnx')
 print('✅ ONNX model saved')
-" && \
-    mkdir -p /models/jina-clip-v2-onnx
+"
 
 # Stage 2: Runtime
 FROM python:3.11-slim
@@ -64,4 +62,10 @@ RUN pip install --no-cache-dir \
 # Copy server code
 COPY server.py /app/server.py
 
-# Health ch
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
