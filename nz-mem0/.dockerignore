@@ -1,0 +1,13 @@
+# FILE: .dockerignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+.git
+.gitignore
+node_modules
+tmp
+build
+dist

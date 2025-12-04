@@ -69,3 +69,24 @@ jobs:
             ghcr.io/nz-genesis/nz-skill-runner:latest
             ghcr.io/nz-genesis/nz-skill-runner:${{ github.sha }}
         continue-on-error: true
+
+      - name: Build and push nz-lightrag
+        uses: docker/build-push-action@v4
+        with:
+          context: ./nz-lightrag
+          push: true
+          tags: |
+            ghcr.io/nz-genesis/nz-lightrag:latest
+            ghcr.io/nz-genesis/nz-lightrag:${{ github.sha }}
+        continue-on-error: true
+
+      - name: Build and push nz-mem0
+        uses: docker/build-push-action@v4
+        with:
+          context: ./nz-mem0
+          push: true
+          tags: |
+            ghcr.io/nz-genesis/nz-mem0:latest
+            ghcr.io/nz-genesis/nz-mem0:${{ github.sha }}
+        continue-on-error: true
+
