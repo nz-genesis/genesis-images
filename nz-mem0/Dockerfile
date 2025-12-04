@@ -1,5 +1,5 @@
 # ---------------------------------------------------------
-# NZ-MEM0 — Genesis image (CPU-optimized v2)
+# NZ-MEM0 — Genesis image (Maximum Space Saving)
 # ---------------------------------------------------------
 FROM python:3.11-slim
 
@@ -26,7 +26,7 @@ RUN apt-get update \
 COPY ./requirements.txt /build/requirements.txt
 COPY ./src /build/src
 
-# Создаем wheels, но НЕ ставим их тут
+# Создаем wheels
 RUN python -m pip install --upgrade pip setuptools wheel \
     && python -m pip wheel --wheel-dir /build/wheels -r /build/requirements.txt
 
@@ -37,15 +37,19 @@ FROM python:3.11-slim as runtime
 
 WORKDIR /app/src
 
-# 1. Сначала ставим CPU-Torch (самый жирный)
-# Используем --no-cache-dir чтобы не хранить скачанное
+# 1. Ставим системные зависимости (если нужны для runtime, например libpq)
+# Для slim образа это часто не нужно, если wheels собраны правильно,
+# но для надежности можно оставить минимальный набор.
+# В данном случае попробуем без лишних apt-get в runtime, чтобы сэкономить место.
+
+# 2. Ставим CPU-версию PyTorch ПЕРВОЙ
+# Используем --no-cache-dir чтобы не хранить кэш
 RUN python -m pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# 2. Копируем wheels из build-stage и ставим их
-# ВАЖНО: Копируем и сразу ставим и сразу удаляем в одной команде
-COPY --from=0 /build/wheels /tmp/wheels
-RUN python -m pip install --no-cache-dir /tmp/wheels/*.whl \
-    && rm -rf /tmp/wheels
+# 3. Монтируем wheels из build-stage (НЕ КОПИРУЕМ!) и устанавливаем
+# Это ключевой момент: файлы не занимают место на диске образа
+RUN --mount=type=bind,from=0,source=/build/wheels,target=/wheels \
+    python -m pip install --no-cache-dir /wheels/*.whl
 
 COPY ./src /app/src
 COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -53,7 +57,7 @@ COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
     && chmod +x /usr/local/bin/entrypoint.sh
 
-# Проверяем наличие main.py и создаем пользователя
+# Проверка и создание пользователя
 RUN test -f /app/src/main.py || (echo "❌ ERROR: main.py not found in /app/src" && exit 1) \
     && addgroup --system app || true \
     && adduser --system --ingroup app --no-create-home app || true \
