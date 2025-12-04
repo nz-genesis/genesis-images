@@ -1,7 +1,8 @@
 # ---------------------------------------------------------
 # NZ-MEM0 — Genesis image (Maximum Space Saving)
 # ---------------------------------------------------------
-FROM python:3.11-slim
+# 1. Даем этапу имя "builder"
+FROM python:3.11-slim AS builder
 
 LABEL maintainer="genesis-team"
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -33,22 +34,16 @@ RUN python -m pip install --upgrade pip setuptools wheel \
 # ---------------------------------------------------------
 # Runtime stage
 # ---------------------------------------------------------
-FROM python:3.11-slim as runtime
+FROM python:3.11-slim AS runtime
 
 WORKDIR /app/src
 
-# 1. Ставим системные зависимости (если нужны для runtime, например libpq)
-# Для slim образа это часто не нужно, если wheels собраны правильно,
-# но для надежности можно оставить минимальный набор.
-# В данном случае попробуем без лишних apt-get в runtime, чтобы сэкономить место.
-
-# 2. Ставим CPU-версию PyTorch ПЕРВОЙ
-# Используем --no-cache-dir чтобы не хранить кэш
+# 2. Ставим CPU-версию PyTorch
 RUN python -m pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
-# 3. Монтируем wheels из build-stage (НЕ КОПИРУЕМ!) и устанавливаем
-# Это ключевой момент: файлы не занимают место на диске образа
-RUN --mount=type=bind,from=0,source=/build/wheels,target=/wheels \
+# 3. Монтируем wheels из этапа "builder" (а не "0")
+# Это решает ошибку "library/0:latest not found"
+RUN --mount=type=bind,from=builder,source=/build/wheels,target=/wheels \
     python -m pip install --no-cache-dir /wheels/*.whl
 
 COPY ./src /app/src
