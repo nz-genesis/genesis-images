@@ -1,92 +1,31 @@
----
-name: Build and Push to GHCR
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Список сервисов для сборки
+        service: [jina-clip, nz-litellm, nz-skill-runner, nz-lightrag, nz-mem0]
+    
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Log in to GHCR
+      - name: Login to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GH_TOKEN }}
 
-      - name: List directory structure
-        run: |
-          echo "Current directory:"
-          pwd
-          echo ""
-          echo "Contents of repo:"
-          ls -la
-          echo ""
-          echo "Checking for services:"
-          for service in jina-clip nz-litellm nz-skill-runner; do
-            if [ -d "$service" ]; then
-              echo "✓ $service found"
-            else
-              echo "✗ $service NOT found"
-            fi
-          done
-
-      - name: Build and push jina-clip
+      - name: Build and push ${{ matrix.service }}
         uses: docker/build-push-action@v4
         with:
-          context: ./jina-clip
+          context: ./${{ matrix.service }}
           push: true
           tags: |
-            ghcr.io/nz-genesis/jina-clip:latest
-            ghcr.io/nz-genesis/jina-clip:${{ github.sha }}
-        continue-on-error: true
-
-      - name: Build and push nz-litellm
-        uses: docker/build-push-action@v4
-        with:
-          context: ./nz-litellm
-          push: true
-          tags: |
-            ghcr.io/nz-genesis/nz-litellm:latest
-            ghcr.io/nz-genesis/nz-litellm:${{ github.sha }}
-        continue-on-error: true
-
-      - name: Build and push nz-skill-runner
-        uses: docker/build-push-action@v4
-        with:
-          context: ./nz-skill-runner
-          push: true
-          tags: |
-            ghcr.io/nz-genesis/nz-skill-runner:latest
-            ghcr.io/nz-genesis/nz-skill-runner:${{ github.sha }}
-        continue-on-error: true
-
-      - name: Build and push nz-lightrag
-        uses: docker/build-push-action@v4
-        with:
-          context: ./nz-lightrag
-          push: true
-          tags: |
-            ghcr.io/nz-genesis/nz-lightrag:latest
-            ghcr.io/nz-genesis/nz-lightrag:${{ github.sha }}
-        continue-on-error: true
-
-      - name: Build and push nz-mem0
-        uses: docker/build-push-action@v4
-        with:
-          context: ./nz-mem0
-          push: true
-          tags: |
-            ghcr.io/nz-genesis/nz-mem0:latest
-            ghcr.io/nz-genesis/nz-mem0:${{ github.sha }}
-        continue-on-error: true
-
+            ghcr.io/nz-genesis/${{ matrix.service }}:latest
+            ghcr.io/nz-genesis/${{ matrix.service }}:${{ github.sha }}
