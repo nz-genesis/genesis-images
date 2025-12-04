@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - 'jina-clip/**'                  # <‑ добавили jina-clip
       - 'nz-*/**'
       - '.github/workflows/build-push.yml'
   workflow_dispatch:
@@ -15,6 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Список сервисов для сборки (находятся в корне репозитория с префиксом nz-)
         service: [jina-clip, nz-litellm, nz-skill-runner, nz-lightrag, nz-mem0]
     
     steps:
@@ -39,9 +41,3 @@ jobs:
           tags: |
             ghcr.io/nz-genesis/${{ matrix.service }}:latest
             ghcr.io/nz-genesis/${{ matrix.service }}:${{ github.sha }}
-
-      - name: Clean up Docker resources
-        if: always()
-        run: |
-          docker buildx du --verbose || true
-          docker buildx prune -f -a || true
