@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'jina-clip/**'                  # <‑ добавили jina-clip
+      - 'jina-clip/**'
       - 'nz-*/**'
       - '.github/workflows/build-push.yml'
   workflow_dispatch:
@@ -16,10 +16,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Список сервисов для сборки (находятся в корне репозитория с префиксом nz-)
         service: [jina-clip, nz-litellm, nz-skill-runner, nz-lightrag, nz-mem0]
     
     steps:
+      # 1. Очистка места (CRITICAL STEP)
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # Удаляем ненужное, чтобы освободить ~10GB+
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: false
+
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -41,3 +53,8 @@ jobs:
           tags: |
             ghcr.io/nz-genesis/${{ matrix.service }}:latest
             ghcr.io/nz-genesis/${{ matrix.service }}:${{ github.sha }}
+
+      # Очистка кэша после сборки (чтобы следующая job в matrix не упала, если они на одном раннере)
+      - name: Prune Docker System
+        if: always()
+        run: docker system prune -af
