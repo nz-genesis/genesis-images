@@ -1,7 +1,5 @@
-# Multi-stage build to reduce final image size
-
 # Stage 1: Builder
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
@@ -24,20 +22,19 @@ RUN pip install --no-cache-dir \
 # Clone Jina CLIP and convert to ONNX
 RUN git clone https://huggingface.co/jinaai/jina-clip-v2 /jina-model && \
     cd /jina-model && \
-    python -c "
-from optimum.onnxruntime import ORTModelForFeatureExtraction
-from transformers import AutoTokenizer
-
-print('Converting Jina CLIP v2 to ONNX...')
-model = ORTModelForFeatureExtraction.from_pretrained('jinaai/jina-clip-v2', export=True)
-model.save_pretrained('/models/jina-clip-v2-onnx')
-tokenizer = AutoTokenizer.from_pretrained('jinaai/jina-clip-v2')
-tokenizer.save_pretrained('/models/jina-clip-v2-onnx')
-print('✅ ONNX model saved')
+    python -c " \
+from optimum.onnxruntime import ORTModelForFeatureExtraction; \
+from transformers import AutoTokenizer; \
+print('Converting Jina CLIP v2 to ONNX...'); \
+model = ORTModelForFeatureExtraction.from_pretrained('jinaai/jina-clip-v2', export=True); \
+model.save_pretrained('/models/jina-clip-v2-onnx'); \
+tokenizer = AutoTokenizer.from_pretrained('jinaai/jina-clip-v2'); \
+tokenizer.save_pretrained('/models/jina-clip-v2-onnx'); \
+print('✅ ONNX model saved'); \
 "
 
 # Stage 2: Runtime
-FROM python:3.11-slim
+FROM python:3.11-slim AS runtime
 
 WORKDIR /app
 
@@ -69,4 +66,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 EXPOSE 8000
 
 CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8000"]
-

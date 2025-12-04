@@ -16,6 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         service: [jina-clip, nz-litellm, nz-skill-runner, nz-lightrag, nz-mem0]
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -38,3 +39,9 @@ jobs:
           tags: |
             ghcr.io/nz-genesis/${{ matrix.service }}:latest
             ghcr.io/nz-genesis/${{ matrix.service }}:${{ github.sha }}
+
+      - name: Clean up Docker resources
+        if: always()
+        run: |
+          docker buildx du --verbose || true
+          docker buildx prune -f -a || true
