@@ -22,3 +22,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD curl -f http://127.0.0.1:8000/health || exit 1
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# В README или в ENTRYPOINT
+RUN echo "WARNING: Copy .env.example to .env and configure before running"
+
