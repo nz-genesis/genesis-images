@@ -27,7 +27,6 @@ jobs:
       - name: TruffleHog Secret Scan
         uses: trufflesecurity/trufflehog@main
         with:
-          path: ./nz-litellm
           base: ${{ github.event.before }}
           head: ${{ github.sha }}
           extra_args: --only-verified
