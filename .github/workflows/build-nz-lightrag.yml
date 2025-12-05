@@ -1,0 +1,78 @@
+name: Build and Push nz-lightrag
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'nz-lightrag/**'
+      - '.github/workflows/build-nz-lightrag.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  secret-scan:
+    name: Secret Scanning
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./nz-lightrag
+          base: ${{ github.event.before }}
+          head: ${{ github.sha }}
+          extra_args: --only-verified
+
+  build:
+    name: Build and Push
+    if: always()
+    needs: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: false
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Build and Push nz-lightrag
+        uses: docker/build-push-action@v4
+        with:
+          context: ./nz-lightrag
+          push: true
+          tags: |
+            ghcr.io/nz-genesis/nz-lightrag:latest
+            ghcr.io/nz-genesis/nz-lightrag:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Cleanup
+        if: always()
+        run: docker system prune -af --volumes

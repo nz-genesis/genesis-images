@@ -1,0 +1,78 @@
+name: Build and Push nz-mem0
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'nz-mem0/**'
+      - '.github/workflows/build-nz-mem0.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  secret-scan:
+    name: Secret Scanning
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./nz-mem0
+          base: ${{ github.event.before }}
+          head: ${{ github.sha }}
+          extra_args: --only-verified
+
+  build:
+    name: Build and Push
+    if: always()
+    needs: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: false
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Build and Push nz-mem0
+        uses: docker/build-push-action@v4
+        with:
+          context: ./nz-mem0
+          push: true
+          tags: |
+            ghcr.io/nz-genesis/nz-mem0:latest
+            ghcr.io/nz-genesis/nz-mem0:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Cleanup
+        if: always()
+        run: docker system prune -af --volumes
