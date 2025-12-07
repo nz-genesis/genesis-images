@@ -1,13 +1,62 @@
-# FILE: .dockerignore
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-venv/
-.env
-.git
+# Docker Build Ignore
+# Excludes unnecessary files from image build context
+# Reduces build time and final image size
+
+# Version Control
+.git/
 .gitignore
-node_modules
-tmp
-build
-dist
+.gitattributes
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pyc
+.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtual Environments
+venv/
+env/
+.venv/
+ENV/
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.editorconfig
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Misc
+.dockerignore
+Dockerfile.dev
+docker-compose*.yml
+*.log
+temp/
+tmp/

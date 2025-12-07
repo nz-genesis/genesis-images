@@ -1,120 +1,282 @@
 """
-Memory backend manager for nz-mem0.
-Compatible with Genesis L2 Settings (MEM0_DATABASE_URL, Qdrant, sqlite fallback).
+nz-mem0 MemoryStore Implementation
+SQLAlchemy + Qdrant for persistent and vector storage
 """
 
-import os
 import json
-from typing import Optional, Dict, Any
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from sqlalchemy import create_engine
-from sqlalchemy.engine import Engine
+from sqlalchemy import Column, String, Text, create_engine, select
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, sessionmaker
 
-from .sqlite_store import SQLiteStore
-from .qdrant_store import QdrantStore
-from .embeddings import EmbeddingBackend
+from src.mcp_mem0.embeddings import EmbeddingsGenerator
+from src.mcp_mem0.qdrant_store import QdrantStore
+from src.mcp_mem0.settings import Settings
+
+logger = logging.getLogger(__name__)
+
+Base = declarative_base()
+settings = Settings()
+
+
+class MemoryRecord(Base):
+    """SQLAlchemy model for memory records."""
+
+    __tablename__ = "memories"
+
+    session_id = Column(String(255), primary_key=True)
+    key = Column(String(255), primary_key=True)
+    value = Column(Text)  # JSON serialized
+    embedding = Column(String(10000))  # Vector as JSON
+    created_at = Column(String(50))  # ISO format timestamp
+    updated_at = Column(String(50))  # ISO format timestamp
 
 
 class MemoryStore:
     """
-    Core memory manager. Initializes:
-      • SQL backend (SQLite or SQLAlchemy DB)
-      • Qdrant vector backend (optional)
-      • Embeddings backend
+    Core memory store combining SQL and vector databases.
+    
+    Features:
+    - Persistent storage in PostgreSQL/SQLite
+    - Vector search via Qdrant
+    - Automatic embeddings generation
+    - Session-based isolation
     """
 
-    def __init__(self, settings):
-        self.settings = settings
+    def __init__(self):
+        """Initialize memory store with database engines."""
+        # Create database engine
+        self.engine = create_engine(
+            settings.MEM0_DATABASE_URL,
+            pool_size=settings.MEM0_DATABASE_POOL_SIZE,
+            max_overflow=settings.MEM0_DATABASE_MAX_OVERFLOW,
+            echo=settings.DEBUG,
+        )
 
-        self.sql_engine: Optional[Engine] = None
-        self.sql_store: Optional[SQLiteStore] = None
-        self.qdrant: Optional[QdrantStore] = None
-        self.embeddings: Optional[EmbeddingBackend] = None
+        # Create tables
+        Base.metadata.create_all(self.engine)
 
-        self._init_backends()
+        # Session factory
+        self.SessionLocal = sessionmaker(bind=self.engine)
 
-    # ---------------------------------------------------------
-    # Backend initialization
-    # ---------------------------------------------------------
-    def _init_backends(self):
-        # -----------------------------------------------------
-        # SQL BACKEND
-        # -----------------------------------------------------
-        db_url = self.settings.MEM0_DATABASE_URL
+        # Initialize vector store
+        self.vector_store = QdrantStore(
+            url=settings.MEM0_QDRANT_URL,
+            api_key=settings.MEM0_QDRANT_API_KEY,
+            collection_name=settings.MEM0_QDRANT_COLLECTION,
+        )
 
-        if db_url:
-            # SQLAlchemy mode
-            self.sql_engine = create_engine(db_url)
-            self.sql_store = SQLiteStore(engine=self.sql_engine)
-        else:
-            # SQLite fallback
-            sqlite_path = self.settings.DB_PATH
-            os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)
+        # Initialize embeddings generator
+        self.embeddings = EmbeddingsGenerator(model_name=settings.MEM0_EMBEDDING_MODEL)
 
-            self.sql_engine = create_engine(f"sqlite:///{sqlite_path}")
-            self.sql_store = SQLiteStore(engine=self.sql_engine)
+        logger.info("✅ MemoryStore initialized")
 
-        # -----------------------------------------------------
-        # QDRANT BACKEND (optional)
-        # -----------------------------------------------------
-        if self.settings.MEM0_QDRANT_URL:
-            self.qdrant = QdrantStore(
-                url=self.settings.MEM0_QDRANT_URL,
-                api_key=self.settings.MEM0_QDRANT_API_KEY,
+    def store(
+        self,
+        session_id: str,
+        key: str,
+        value: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Store a memory record.
+
+        Args:
+            session_id: User/session identifier
+            key: Memory key
+            value: Memory value (any JSON-serializable object)
+
+        Returns:
+            Dictionary with stored record metadata
+        """
+        try:
+            # Serialize value to JSON
+            value_json = json.dumps(value)
+
+            # Generate embedding
+            embedding_vector = self.embeddings.encode(value_json)
+
+            # Create memory record
+            now = datetime.utcnow().isoformat()
+            record = MemoryRecord(
+                session_id=session_id,
+                key=key,
+                value=value_json,
+                embedding=json.dumps(embedding_vector),
+                created_at=now,
+                updated_at=now,
             )
 
-        # -----------------------------------------------------
-        # EMBEDDINGS BACKEND
-        # -----------------------------------------------------
-        if self.settings.MEM0_ENABLE_EMBEDDINGS:
-            self.embeddings = EmbeddingBackend(model=self.settings.EMBEDDING_MODEL)
+            # Store in SQL database
+            session = self.SessionLocal()
+            try:
+                session.merge(record)  # Insert or update
+                session.commit()
+            finally:
+                session.close()
 
-    # ---------------------------------------------------------
-    # Basic operations
-    # ---------------------------------------------------------
-    def add(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> Dict:
+            # Store in vector database
+            vector_id = f"{session_id}:{key}"
+            self.vector_store.upsert(
+                vector_id=vector_id,
+                vector=embedding_vector,
+                payload={
+                    "session_id": session_id,
+                    "key": key,
+                    "timestamp": now,
+                },
+            )
+
+            logger.info(f"✅ Stored memory: {session_id}/{key}")
+
+            return {
+                "id": vector_id,
+                "session_id": session_id,
+                "key": key,
+                "timestamp": now,
+            }
+
+        except Exception as e:
+            logger.error(f"❌ Error storing memory: {e}")
+            raise
+
+    def retrieve(
+        self,
+        session_id: str,
+        key: str,
+    ) -> Optional[Dict[str, Any]]:
         """
-        Add memory item:
-          • SQL record
-          • Optional embedding + vector index
+        Retrieve a specific memory record.
+
+        Args:
+            session_id: User/session identifier
+            key: Memory key
+
+        Returns:
+            Memory value or None if not found
         """
-        item_id = self.sql_store.add(text=text, metadata=metadata)
+        try:
+            session = self.SessionLocal()
+            try:
+                stmt = select(MemoryRecord).where(
+                    (MemoryRecord.session_id == session_id)
+                    & (MemoryRecord.key == key)
+                )
+                record = session.execute(stmt).scalar_one_or_none()
 
-        # Vector index update
-        if self.qdrant and self.embeddings:
-            embedding = self.embeddings.encode(text)
-            self.qdrant.upsert_vector(item_id=item_id, vector=embedding)
+                if not record:
+                    logger.warning(f"⚠️  Memory not found: {session_id}/{key}")
+                    return None
 
-        return {"id": item_id, "text": text, "metadata": metadata}
+                return {
+                    "key": record.key,
+                    "value": json.loads(record.value),
+                    "timestamp": record.updated_at,
+                }
 
-    def search(self, query: str, limit: int = 5) -> Dict:
+            finally:
+                session.close()
+
+        except Exception as e:
+            logger.error(f"❌ Error retrieving memory: {e}")
+            raise
+
+    def search(
+        self,
+        session_id: str,
+        query: str,
+        limit: int = 10,
+    ) -> List[Dict[str, Any]]:
         """
-        Hybrid vector + SQL search:
-          • If Qdrant+embeddings available → vector search first
-          • Else → SQL-only fallback
+        Search memories using vector similarity.
+
+        Args:
+            session_id: User/session identifier
+            query: Search query string
+            limit: Maximum results to return
+
+        Returns:
+            List of matching memories sorted by relevance
         """
-        if self.qdrant and self.embeddings:
-            query_vec = self.embeddings.encode(query)
-            vector_hits = self.qdrant.search_vector(query_vec, limit=limit)
-            sql_items = self.sql_store.get_many([h["id"] for h in vector_hits])
-            return sql_items
+        try:
+            # Generate query embedding
+            query_vector = self.embeddings.encode(query)
 
-        # fallback: SQL LIKE search
-        return self.sql_store.search_text(query, limit=limit)
+            # Search in vector store
+            results = self.vector_store.search(
+                vector=query_vector,
+                limit=limit,
+                filters={"session_id": session_id},
+            )
 
-    def get(self, item_id: int) -> Optional[Dict]:
-        return self.sql_store.get(item_id)
+            # Enrich results with SQL data
+            enriched_results = []
+            for result in results:
+                # Parse vector ID
+                parts = result["id"].split(":")
+                if len(parts) != 2:
+                    continue
 
-    def delete(self, item_id: int) -> bool:
-        self.sql_store.delete(item_id)
-        if self.qdrant:
-            self.qdrant.delete_vector(item_id)
-        return True
+                key = parts[1]
 
-    # ---------------------------------------------------------
-    # Bulk export (debug/dev)
-    # ---------------------------------------------------------
-    def export_all(self) -> Dict:
-        return {
-            "items": self.sql_store.export_all(),
-        }
+                # Retrieve full record from SQL
+                memory = self.retrieve(session_id, key)
+                if memory:
+                    enriched_results.append({
+                        **memory,
+                        "score": result.get("score", 0),
+                    })
+
+            logger.info(f"✅ Found {len(enriched_results)} memories for query")
+            return enriched_results
+
+        except Exception as e:
+            logger.error(f"❌ Error searching memories: {e}")
+            raise
+
+    def delete(self, session_id: str, key: str) -> bool:
+        """
+        Delete a memory record.
+
+        Args:
+            session_id: User/session identifier
+            key: Memory key
+
+        Returns:
+            True if deleted, False if not found
+        """
+        try:
+            # Delete from SQL
+            session = self.SessionLocal()
+            try:
+                stmt = select(MemoryRecord).where(
+                    (MemoryRecord.session_id == session_id)
+                    & (MemoryRecord.key == key)
+                )
+                record = session.execute(stmt).scalar_one_or_none()
+
+                if not record:
+                    logger.warning(f"⚠️  Memory not found: {session_id}/{key}")
+                    return False
+
+                session.delete(record)
+                session.commit()
+            finally:
+                session.close()
+
+            # Delete from vector store
+            vector_id = f"{session_id}:{key}"
+            self.vector_store.delete(vector_id)
+
+            logger.info(f"✅ Deleted memory: {session_id}/{key}")
+            return True
+
+        except Exception as e:
+            logger.error(f"❌ Error deleting memory: {e}")
+            raise
+
+
+# Global instance
+memory_store = MemoryStore()

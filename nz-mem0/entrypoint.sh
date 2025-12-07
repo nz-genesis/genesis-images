@@ -1,34 +1,42 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+# entrypoint.sh - nz-mem0 startup script
+set -e
 
-# entrypoint for nz-mem0
-# responsibilities:
-#  - load .env if present
-#  - run a quick python import sanity check
-#  - exec the CMD (uvicorn ...) as PID 1
+echo "🚀 Starting nz-mem0 v0.1.0..."
 
-# load .env if exists (simple)
-ENV_FILE="/app/.env"
-if [ -f "${ENV_FILE}" ]; then
-  # shellcheck disable=SC1090
-  set -o allexport
-  # shellcheck disable=SC1090
-  . "${ENV_FILE}"
-  set +o allexport
-fi
+# Smoke tests
+echo "📋 Running smoke tests..."
 
-echo "Starting nz-mem0 (bind=${HOST:-0.0.0.0}, port=${PORT:-8090})"
-
-# quick import check to produce readable error early (smoke-test relies on this)
-python - <<'PY'
+# Test: Python imports
+python3 << 'EOF'
 import sys
 try:
-    import importlib
-    importlib.import_module("main")
+    from src.main import app
+    print("✅ src.main.app imports OK")
 except Exception as e:
-    print("ERROR: import of 'main' failed:", file=sys.stderr)
-    raise
-PY
+    print(f"❌ Import error: {e}")
+    sys.exit(1)
 
-# exec passed CMD (uvicorn main:app ...)
-exec "$@"
+try:
+    from src.mcp_mem0.settings import Settings
+    print("✅ Settings imports OK")
+except Exception as e:
+    print(f"❌ Settings import error: {e}")
+    sys.exit(1)
+
+try:
+    from src.mcp_mem0.memory import MemoryStore
+    print("✅ MemoryStore imports OK")
+except Exception as e:
+    print(f"❌ MemoryStore import error: {e}")
+    sys.exit(1)
+EOF
+
+echo "✅ All smoke tests passed!"
+
+# Start uvicorn with FastAPI app
+echo "🌐 Starting uvicorn server on 0.0.0.0:8090..."
+exec uvicorn src.main:app \
+    --host 0.0.0.0 \
+    --port 8090 \
+    --log-level info

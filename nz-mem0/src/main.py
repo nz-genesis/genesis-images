@@ -1,92 +1,90 @@
 """
-Main FastAPI application for nz-mem0.
-Creates MemoryStore from settings and exposes minimal API for health + memory operations.
+nz-mem0 FastAPI Application Entry Point
+Version: 0.1.0
 """
 
-import logging
-from fastapi import FastAPI, Depends, HTTPException
+from contextlib import asynccontextmanager
+from typing import Any, Dict
+
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-from typing import Dict, Any, List, Optional
 
-from mcp_mem0.memory import MemoryStore
-from mcp_mem0.settings import get_settings  # NOTE: you've provided settings.py; adjust import path if different
+from src.mcp_mem0.settings import Settings
+from src.mcp_mem0.api import health, memory, tools
 
-# configure basic logging
-logger = logging.getLogger("nz-mem0")
-logger.setLevel("INFO")
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
-logger.addHandler(handler)
+# Initialize settings
+settings = Settings()
 
-app = FastAPI(title="nz-mem0", version="0.1.0")
 
-# create settings and store on startup
-@app.on_event("startup")
-async def startup_event():
-    logger.info("nz-mem0 startup — initializing backends")
-    settings = get_settings()
-    # attach settings and store to app.state for handlers
-    app.state.settings = settings
-    try:
-        app.state.store = MemoryStore(settings=settings)
-    except Exception as exc:
-        logger.exception("MemoryStore initialization failed")
-        raise
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI lifespan context manager.
+    Handles startup and shutdown events.
+    """
+    # Startup
+    print("🚀 Starting nz-mem0 v0.1.0...")
+    print(f"📡 Database: {settings.MEM0_DATABASE_URL[:50]}...")
+    print(f"🔍 Qdrant: {settings.MEM0_QDRANT_URL}")
+    yield
+    # Shutdown
+    print("🛑 Shutting down nz-mem0...")
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("nz-mem0 shutdown — cleaning up")
-    store = getattr(app.state, "store", None)
-    if store:
-        # place for graceful teardown (if needed)
-        pass
 
-# --------------------
-# Health
-# --------------------
+# Create FastAPI app
+app = FastAPI(
+    title="nz-mem0",
+    description="Working Memory Service for nz-genesis",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+
+# Health check endpoint
 @app.get("/health")
-def health():
-    return JSONResponse({"status": "ok"})
-
-# --------------------
-# Memory endpoints
-# --------------------
-@app.post("/memory/add")
-def add_memory(payload: Dict[str, Any]):
+async def health_check() -> Dict[str, Any]:
     """
-    Body: { "text": "...", "metadata": {...} }
+    Health check endpoint.
+    
+    Returns:
+        dict: Service health status
     """
-    store: MemoryStore = app.state.store
-    text = payload.get("text")
-    if not text:
-        raise HTTPException(status_code=400, detail="text required")
-    metadata = payload.get("metadata")
-    out = store.add(text=text, metadata=metadata)
-    return out
+    return {
+        "status": "ok",
+        "service": "nz-mem0",
+        "version": "0.1.0",
+    }
 
-@app.get("/memory/get/{item_id}")
-def get_memory(item_id: int):
-    store: MemoryStore = app.state.store
-    item = store.get(item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="not found")
-    return item
 
-@app.post("/memory/search")
-def search_memory(payload: Dict[str, Any]):
+# Include routers
+app.include_router(health.router, prefix="/health", tags=["health"])
+app.include_router(memory.router, prefix="/memory", tags=["memory"])
+app.include_router(tools.router, prefix="/tools", tags=["tools"])
+
+
+# Global exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc: Exception):
     """
-    Body: { "query": "...", "limit": 5 }
+    Global exception handler for unhandled errors.
     """
-    store: MemoryStore = app.state.store
-    q = payload.get("query")
-    if not q:
-        raise HTTPException(status_code=400, detail="query required")
-    limit = int(payload.get("limit", 5))
-    results = store.search(query=q, limit=limit)
-    return {"results": results}
+    print(f"❌ Unhandled error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "message": "Internal server error",
+            "detail": str(exc) if settings.DEBUG else None,
+        },
+    )
 
-# simple listing endpoint (for debug)
-@app.get("/memory/list")
-def list_memory(limit: Optional[int] = 50):
-    store: MemoryStore = app.state.store
-    return {"items": store.sql_store.get_last(limit=limit)}
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        app,
+        host=settings.HOST,
+        port=settings.PORT,
+        log_level=settings.LOG_LEVEL,
+    )

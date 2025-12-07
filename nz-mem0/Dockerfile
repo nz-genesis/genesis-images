@@ -1,53 +1,59 @@
-# Stage 1: Builder
+# Use Python 3.11 slim as base
 FROM python:3.11-slim AS builder
 
+# Set working directory
 WORKDIR /build
 
-# Установим build-tools
+# Install system dependencies for building
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    gcc \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ./requirements.txt .
+# Copy requirements
+COPY requirements.txt .
 
-# Сначала ставим torch CPU явно!
-# Это предотвращает скачивание CUDA версий зависимостями
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
-
-# Потом всё остальное, но говорим pip'у не обновлять torch
+# Create wheels
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip wheel --wheel-dir /build/wheels -r requirements.txt \
-    --find-links https://download.pytorch.org/whl/cpu
+    pip wheel --no-cache-dir --no-deps --wheel-dir /build/wheels -r requirements.txt
 
-# Stage 2: Runtime
-FROM python:3.11-slim AS runtime
+# ============================================================
+# Runtime stage
+# ============================================================
+FROM python:3.11-slim
 
-WORKDIR /app/src
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Минимальные системные библиотеки
+# Create non-root user
+RUN groupadd -r app && useradd -r -g app app
+
+# Set working directory
+WORKDIR /app
+
+# Copy wheels from builder
+COPY --from=builder /build/wheels /tmp/wheels
+
+# Install runtime dependencies (minimal)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libopenblas0 \
-    libgomp1 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка из wheels (Mount bind)
-RUN --mount=type=bind,from=builder,source=/build/wheels,target=/wheels \
-    pip install --no-cache-dir --no-index --find-links=/wheels /wheels/*.whl
+# Install Python packages from wheels
+RUN pip install --no-cache-dir --no-index --find-links /tmp/wheels -r /tmp/wheels/*.whl && \
+    rm -rf /tmp/wheels
 
-COPY ./src /app/src
-COPY ./entrypoint.sh /usr/local/bin/entrypoint.sh
+# Copy application code
+COPY --chown=app:app . .
 
-RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && \
-    chmod +x /usr/local/bin/entrypoint.sh && \
-    addgroup --system app && \
-    adduser --system --ingroup app app && \
-    mkdir -p /var/log/nz-mem0 /data && \
-    chown -R app:app /app /var/log/nz-mem0 /data
-
+# Switch to non-root user
 USER app
-EXPOSE 8090
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8090"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8090/health || exit 1
+
+# Run entrypoint
+ENTRYPOINT ["/bin/bash", "entrypoint.sh"]
