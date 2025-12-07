@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1.7
 
 # ============================================================================
-# nz-mem0 v0.1.0 - Optimized Multi-Stage Dockerfile
+# nz-mem0 v0.1.0 - Optimized Multi-Stage Dockerfile (FIXED)
 # ============================================================================
 # Author: Nick Zhukoff
-# Purpose: FastAPI service for NZ-Genesis L2 Working Memory (with Qdrant + SQLite)
+# Purpose: FastAPI service for NZ-Genesis L2 Working Memory
 # Build: docker build -t nz-mem0:0.1.0 .
 # Run: docker run -p 8090:8090 nz-mem0:0.1.0
 # ============================================================================
@@ -53,7 +53,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy wheels from builder stage
 COPY --from=builder /build/wheels /tmp/wheels
 
-# Install Python packages from wheels (FIXED: no -r flag for .whl files)
+# Install Python packages from wheels (FIXED: includes typing-extensions)
 RUN pip install --no-cache-dir --no-index \
     /tmp/wheels/*.whl && \
     rm -rf /tmp/wheels
@@ -80,5 +80,5 @@ EXPOSE 8090
 # Set entrypoint
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Default command (can be overridden)
+# Default command
 CMD ["python", "-m", "src.main"]
