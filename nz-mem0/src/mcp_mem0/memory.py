@@ -12,7 +12,7 @@ from sqlalchemy import Column, String, Text, create_engine, select
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
-from src.mcp_mem0.embeddings import EmbeddingsGenerator
+from src.mcp_mem0.embeddings import EmbeddingBackend
 from src.mcp_mem0.qdrant_store import QdrantStore
 from src.mcp_mem0.settings import Settings
 
@@ -38,7 +38,7 @@ class MemoryRecord(Base):
 class MemoryStore:
     """
     Core memory store combining SQL and vector databases.
-    
+
     Features:
     - Persistent storage in PostgreSQL/SQLite
     - Vector search via Qdrant
@@ -69,8 +69,11 @@ class MemoryStore:
             collection_name=settings.MEM0_QDRANT_COLLECTION,
         )
 
-        # Initialize embeddings generator
-        self.embeddings = EmbeddingsGenerator(model_name=settings.MEM0_EMBEDDING_MODEL)
+        # Initialize embeddings generator (ИСПРАВЛЕНО: EmbeddingBackend вместо EmbeddingsGenerator)
+        self.embeddings = EmbeddingBackend(
+            model=settings.MEM0_EMBEDDING_MODEL,
+            dim=settings.MEM0_EMBEDDING_DIMENSION,
+        )
 
         logger.info("✅ MemoryStore initialized")
 
