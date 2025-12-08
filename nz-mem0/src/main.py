@@ -11,6 +11,8 @@ from fastapi.responses import JSONResponse
 
 from src.mcp_mem0.settings import Settings
 from src.mcp_mem0.api import health, memory, tools
+from src.mcp_mem0.memory import MemoryStore  # ✅ ДОБАВЛЕНО
+
 
 # Initialize settings
 settings = Settings()
@@ -22,13 +24,41 @@ async def lifespan(app: FastAPI):
     FastAPI lifespan context manager.
     Handles startup and shutdown events.
     """
-    # Startup
+    # Startup ✅ ДОБАВЛЕНО: Инициализация state
     print("🚀 Starting nz-mem0 v0.1.0...")
     print(f"📡 Database: {settings.MEM0_DATABASE_URL[:50]}...")
     print(f"🔍 Qdrant: {settings.MEM0_QDRANT_URL}")
+    
+    try:
+        # Initialize MemoryStore ✅ КРИТИЧНО
+        print("🔧 Initializing MemoryStore...")
+        app.state.store = MemoryStore()
+        print("✅ MemoryStore initialized successfully")
+        
+        # Initialize MCP state
+        print("🔧 Initializing MCP...")
+        app.state.mcp = {
+            "tools": {},
+            "config": {},
+        }
+        print("✅ MCP initialized successfully")
+        
+    except Exception as e:
+        print(f"❌ Initialization failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+    
     yield
+    
     # Shutdown
     print("🛑 Shutting down nz-mem0...")
+    try:
+        if hasattr(app.state, 'store') and app.state.store:
+            # Cleanup если нужно
+            pass
+    except Exception as e:
+        print(f"⚠️ Error during shutdown: {e}")
 
 
 # Create FastAPI app
