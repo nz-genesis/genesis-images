@@ -1,5 +1,3 @@
-
-src___init__.py
 """
 nz-mem0 Python package
 """
