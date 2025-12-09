@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy import Column, String, Text, create_engine, select
+from sqlalchemy import Column, String, Text, create_engine, select, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -69,7 +69,7 @@ class MemoryStore:
             collection_name=settings.MEM0_QDRANT_COLLECTION,
         )
 
-        # Initialize embeddings generator (ИСПРАВЛЕНО: EmbeddingBackend вместо EmbeddingsGenerator)
+        # Initialize embeddings generator
         self.embeddings = EmbeddingBackend(
             model=settings.MEM0_EMBEDDING_MODEL,
             dim=settings.MEM0_EMBEDDING_DIMENSION,
@@ -122,10 +122,13 @@ class MemoryStore:
 
             # Store in vector database
             vector_id = f"{session_id}:{key}"
-            self.vector_store.upsert(
-                vector_id=vector_id,
+            vector_id_hash = hash(vector_id) % (10**9)  # ✅ ИСПРАВЛЕНО: Convert to int
+            
+            self.vector_store.upsert_vector(  # ✅ ИСПРАВЛЕНО: upsert → upsert_vector
+                item_id=vector_id_hash,
                 vector=embedding_vector,
                 payload={
+                    "vector_id": vector_id,  # Keep original ID
                     "session_id": session_id,
                     "key": key,
                     "timestamp": now,
@@ -208,35 +211,81 @@ class MemoryStore:
             query_vector = self.embeddings.encode(query)
 
             # Search in vector store
-            results = self.vector_store.search(
-                vector=query_vector,
+            results = self.vector_store.search_vector(  # ✅ ИСПРАВЛЕНО: search → search_vector
+                query_vector=query_vector,
                 limit=limit,
-                filters={"session_id": session_id},
             )
 
-            # Enrich results with SQL data
+            # Filter by session_id and enrich with SQL data
             enriched_results = []
             for result in results:
-                # Parse vector ID
-                parts = result["id"].split(":")
-                if len(parts) != 2:
+                payload = result.get("payload", {})
+                result_session_id = payload.get("session_id")
+                result_key = payload.get("key")
+                
+                # Filter by session_id
+                if result_session_id != session_id:
                     continue
 
-                key = parts[1]
-
                 # Retrieve full record from SQL
-                memory = self.retrieve(session_id, key)
-                if memory:
-                    enriched_results.append({
-                        **memory,
-                        "score": result.get("score", 0),
-                    })
+                if result_key:
+                    memory = self.retrieve(session_id, result_key)
+                    if memory:
+                        enriched_results.append({
+                            **memory,
+                            "score": result.get("score", 0),
+                        })
 
             logger.info(f"✅ Found {len(enriched_results)} memories for query")
             return enriched_results
 
         except Exception as e:
             logger.error(f"❌ Error searching memories: {e}")
+            raise
+
+    def recent(
+        self,
+        session_id: str,
+        limit: int = 20,
+    ) -> List[Dict[str, Any]]:
+        """
+        Get recent memories for a session.
+
+        Args:
+            session_id: User/session identifier
+            limit: Maximum number of results
+
+        Returns:
+            List of recent memories ordered by timestamp (newest first)
+        """
+        try:
+            session = self.SessionLocal()
+            try:
+                stmt = (
+                    select(MemoryRecord)
+                    .where(MemoryRecord.session_id == session_id)
+                    .order_by(desc(MemoryRecord.updated_at))
+                    .limit(limit)
+                )
+                records = session.execute(stmt).scalars().all()
+
+                results = [
+                    {
+                        "key": r.key,
+                        "value": json.loads(r.value),
+                        "timestamp": r.updated_at,
+                    }
+                    for r in records
+                ]
+
+                logger.info(f"✅ Retrieved {len(results)} recent memories")
+                return results
+
+            finally:
+                session.close()
+
+        except Exception as e:
+            logger.error(f"❌ Error retrieving recent memories: {e}")
             raise
 
     def delete(self, session_id: str, key: str) -> bool:
@@ -271,7 +320,9 @@ class MemoryStore:
 
             # Delete from vector store
             vector_id = f"{session_id}:{key}"
-            self.vector_store.delete(vector_id)
+            vector_id_hash = hash(vector_id) % (10**9)  # ✅ ИСПРАВЛЕНО: Convert to int
+            
+            self.vector_store.delete_vector(vector_id_hash)  # ✅ ИСПРАВЛЕНО: delete → delete_vector
 
             logger.info(f"✅ Deleted memory: {session_id}/{key}")
             return True
