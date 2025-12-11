@@ -11,7 +11,6 @@ RUN pip install --no-cache-dir \
     prisma \
     python-dotenv
 
-
 # Найди и скопируй schema.prisma из установленного пакета litellm
 RUN python -c "import site; import os; \
     pkg_path = os.path.join(site.getsitepackages()[0], 'litellm'); \
@@ -25,7 +24,7 @@ COPY litellm_config.yaml .
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD python -c "import socket; socket.create_connection(('127.0.0.1', 8000), timeout=5)" || exit 1
 
 CMD ["litellm", "--host", "0.0.0.0", "--port", "8000"]
