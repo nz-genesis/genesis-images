@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'nz-litellm/**'
+      - 'genesis-images/nz-litellm/**'
       - '.github/workflows/build-and-push.yml'
   workflow_dispatch:
 
@@ -64,7 +64,7 @@ jobs:
       - name: Build and Push LiteLLM
         uses: docker/build-push-action@v4
         with:
-          context: ./nz-litellm
+          context: ./genesis-images/nz-litellm
           push: true
           tags: |
             ghcr.io/nz-genesis/litellm:latest
