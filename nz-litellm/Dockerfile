@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir 'litellm[proxy]' python-dotenv
 
 # 3. Generate Prisma Client using npx (Node.js native, NO Python wrapper)
-RUN npx prisma@latest generate --schema /usr/local/lib/python3.11/site-packages/litellm/proxy/schema.prisma
+RUN npx prisma@5 generate --schema /usr/local/lib/python3.11/site-packages/litellm/proxy/schema.prisma
 
 COPY litellm_config.yaml .
 
