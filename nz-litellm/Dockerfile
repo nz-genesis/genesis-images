@@ -1,28 +1,14 @@
 FROM python:3.11-slim
 
-LABEL maintainer="Nick Zhukoff <3327263@gmail.com>"
-LABEL org.opencontainers.image.title="nz-litellm"
-LABEL org.opencontainers.image.description="LLM API wrapper for Genesis Project"
-
 WORKDIR /app
 
-RUN apt-get update \
- && apt-get install -y --no-install-recommends gcc libpq-dev curl \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir litellm
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . /app
+COPY litellm_config.yaml .
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
-  CMD curl -f http://127.0.0.1:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-
-# В README или в ENTRYPOINT
-RUN echo "WARNING: Copy .env.example to .env and configure before running"
-
+CMD ["litellm", "--host", "0.0.0.0", "--port", "8000"]

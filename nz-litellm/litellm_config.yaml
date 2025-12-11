@@ -1,0 +1,15 @@
+general_settings:
+  master_key: "${LITELLM_MASTER_KEY}"
+  database_url: "${DATABASE_URL}"
+  redis_url: "${REDIS_URL}"
+  enable_logging: true
+  log_level: "INFO"
+  
+litellm_settings:
+  cache: "redis"
+  cache_params:
+    type: "redis"
+    namespace: "litellm"
+    ttl: 3600
+
+model_list: []
