@@ -1,14 +1,15 @@
-FROM python:3.11-slim
+FROM python:3.11
 
 WORKDIR /app
 
-# 1. Install dependencies (Node.js НЕ нужен - LiteLLM includes pre-built Prisma Client)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 2. Install Python dependencies
-RUN pip install --no-cache-dir 'litellm[proxy]' prisma python-dotenv
+RUN pip install --no-cache-dir \
+    'litellm[proxy]' \
+    prisma \
+    python-dotenv
 
 COPY litellm_config.yaml .
 
