@@ -8,7 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir \
     'litellm[proxy]' \
+    prisma \
     python-dotenv
+
 
 # Найди и скопируй schema.prisma из установленного пакета litellm
 RUN python -c "import site; import os; \
