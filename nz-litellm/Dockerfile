@@ -8,8 +8,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir \
     'litellm[proxy]' \
-    prisma \
     python-dotenv
+
+# Найди и скопируй schema.prisma из установленного пакета litellm
+RUN python -c "import site; import os; \
+    pkg_path = os.path.join(site.getsitepackages()[0], 'litellm'); \
+    schema = os.path.join(pkg_path, 'proxy', 'schema.prisma'); \
+    os.system(f'cp {schema} /app/schema.prisma')"
+
+# Запусти prisma generate с найденной schema
+RUN python -m prisma generate --schema /app/schema.prisma
 
 COPY litellm_config.yaml .
 
