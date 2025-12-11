@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Install Python dependencies
-RUN pip install --no-cache-dir 'litellm[proxy]' python-dotenv
+RUN pip install --no-cache-dir 'litellm[proxy]' prisma python-dotenv
 
 COPY litellm_config.yaml .
 
