@@ -1,0 +1,120 @@
+name: Guard NZ Image Structure
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  guard-nz-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check nz-* directories are only in genesis-images/
+        run: |
+          # Find all nz-* directories ONLY within genesis-images/
+          VIOLATIONS=""
+          
+          while IFS= read -r dir; do
+            # Check if the directory is NOT directly under genesis-images/
+            # Remove genesis-images/ prefix for checking
+            relative_path="${dir#genesis-images/}"
+            if [[ "$relative_path" == */* ]]; then
+              VIOLATIONS="${VIOLATIONS}${dir}"$'\n'
+            fi
+          done < <(find genesis-images/ -maxdepth 2 -type d -name "nz-*" 2>/dev/null)
+          
+          if [[ -n "$VIOLATIONS" ]]; then
+            echo "=============================================="
+            echo "GENESIS CANON VIOLATION DETECTED"
+            echo "=============================================="
+            echo ""
+            echo "Found nz-* directories NOT directly under genesis-images/:"
+            echo ""
+            echo "$VIOLATIONS"
+            echo ""
+            echo "WHY THIS VIOLATES GENESIS CANON:"
+            echo "  nz-* image directories (like nz-nginx, nz-postgres, etc.)"
+            echo "  MUST exist directly under genesis-images/ directory."
+            echo ""
+            echo "GENESIS CANON RULE:"
+            echo "  All nz-* image code MUST live directly in genesis-images/"
+            echo ""
+            echo "FIX:"
+            echo "  Move these directories to be directly under genesis-images/."
+            echo "=============================================="
+            exit 1
+          fi
+
+      - name: Check Dockerfiles are only in genesis-images/
+        run: |
+          # Find all Dockerfiles ONLY within genesis-images/
+          VIOLATIONS=""
+          
+          while IFS= read -r dockerfile; do
+            # Get the directory containing the Dockerfile
+            dir=$(dirname "$dockerfile")
+            # Remove genesis-images/ prefix for checking
+            relative_path="${dir#genesis-images/}"
+            # Check if the Dockerfile's directory is NOT directly under genesis-images/
+            if [[ "$relative_path" == */* ]]; then
+              VIOLATIONS="${VIOLATIONS}${dockerfile}"$'\n'
+            fi
+          done < <(find genesis-images/ -maxdepth 2 -type f -name "Dockerfile" 2>/dev/null)
+          
+          if [[ -n "$VIOLATIONS" ]]; then
+            echo "=============================================="
+            echo "GENESIS CANON VIOLATION DETECTED"
+            echo "=============================================="
+            echo ""
+            echo "Found Dockerfiles NOT directly under genesis-images/:"
+            echo ""
+            echo "$VIOLATIONS"
+            echo ""
+            echo "WHY THIS VIOLATES GENESIS CANON:"
+            echo "  All Dockerfiles MUST exist directly under genesis-images/"
+            echo "  directory structure for proper image organization."
+            echo ""
+            echo "GENESIS CANON RULE:"
+            echo "  Dockerfiles MUST live in genesis-images/*/Dockerfile"
+            echo ""
+            echo "FIX:"
+            echo "  Move these Dockerfiles to be directly under genesis-images/."
+            echo "=============================================="
+            exit 1
+          fi
+
+      - name: Check .github/workflows does NOT exist in nz-* directories
+        run: |
+          # Find .github/workflows directories inside nz-* directories ONLY within genesis-images/
+          VIOLATIONS=""
+          
+          while IFS= read -r workflow_dir; do
+            VIOLATIONS="${VIOLATIONS}${workflow_dir}"
+          done < <(find genesis-images/ -type d -path "*/nz-*/.github/workflows" 2>/dev/null)
+          
+          if [[ -n "$VIOLATIONS" ]]; then
+            echo "=============================================="
+            echo "GENESIS CANON VIOLATION DETECTED"
+            echo "=============================================="
+            echo ""
+            echo "Found .github/workflows INSIDE nz-* directories:"
+            echo ""
+            echo "$VIOLATIONS"
+            echo ""
+            echo "WHY THIS VIOLATES GENESIS CANON:"
+            echo "  .github/workflows directories MUST NOT exist inside nz-* directories."
+            echo "  All CI/CD pipelines MUST be defined in genesis-images/.github/workflows/"
+            echo ""
+            echo "GENESIS CANON RULE:"
+            echo "  nz-* directories contain ONLY: Dockerfile, source code, config files"
+            echo "  CI workflows MUST be at: genesis-images/.github/workflows/"
+            echo ""
+            echo "FIX:"
+            echo "  Remove .github/workflows directories from nz-* directories."
+            echo "  Define CI workflows in genesis-images/.github/workflows/ instead."
+            echo "=============================================="
+            exit 1
+          fi
