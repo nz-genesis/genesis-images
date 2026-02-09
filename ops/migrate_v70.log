@@ -1,0 +1,92 @@
+2025-11-24 18:11:20  [INFO] ================= Genesis v70.0 Migration R2 started ================
+2025-11-24 18:11:20  [INFO] Checking GitHub Auth...
+2025-11-24 18:11:20  [INFO] Checking organization membership via reliable API path...
+2025-11-24 18:11:21  [INFO] Membership confirmed: access to nz-genesis OK.
+2025-11-24 18:11:21  [INFO] Fetching repository list from nz-genesis...
+2025-11-24 18:11:21  [INFO] Found repositories:
+genesis-lab (PRIVATE)
+genesis-docs (PRIVATE)
+genesis-public (PUBLIC)
+genesis-assets (PRIVATE)
+genesis-mirror-scripts (PRIVATE)
+genesis-ci-templates (PRIVATE)
+genesis-release-manifest (PRIVATE)
+genesis-security-model (PRIVATE)
+genesis-backup-and-recovery (PRIVATE)
+genesis-infra (PRIVATE)
+genesis-services (PRIVATE)
+genesis-images (PRIVATE)
+genesis-minio-schema (PRIVATE)
+genesis-memory (PRIVATE)
+genesis-schemas (PRIVATE)
+genesis-skills (PRIVATE)
+genesis-agents (PRIVATE)
+genesis-supermonorepo (PRIVATE)
+2025-11-24 18:11:21  [INFO] Starting visibility corrections...
+2025-11-24 18:11:21  [ACTION] Setting PRIVATE visibility → genesis-lab
+2025-11-24 18:12:39  [INFO] ================= Genesis v70.0 Migration R3 started ================
+2025-11-24 18:12:39  [INFO] Checking GitHub Auth...
+2025-11-24 18:12:40  [INFO] Checking organization membership via reliable API path...
+2025-11-24 18:12:40  [INFO] Membership confirmed: access to nz-genesis OK.
+2025-11-24 18:12:40  [INFO] Fetching repository list from nz-genesis...
+2025-11-24 18:12:41  [INFO] Found repositories:
+genesis-lab (PRIVATE)
+genesis-docs (PRIVATE)
+genesis-public (PUBLIC)
+genesis-assets (PRIVATE)
+genesis-mirror-scripts (PRIVATE)
+genesis-ci-templates (PRIVATE)
+genesis-release-manifest (PRIVATE)
+genesis-security-model (PRIVATE)
+genesis-backup-and-recovery (PRIVATE)
+genesis-infra (PRIVATE)
+genesis-services (PRIVATE)
+genesis-images (PRIVATE)
+genesis-minio-schema (PRIVATE)
+genesis-memory (PRIVATE)
+genesis-schemas (PRIVATE)
+genesis-skills (PRIVATE)
+genesis-agents (PRIVATE)
+genesis-supermonorepo (PRIVATE)
+2025-11-24 18:12:41  [INFO] Starting visibility corrections...
+2025-11-24 18:12:41  [ACTION] Setting PRIVATE visibility → genesis-lab
+2025-11-24 18:12:42  [ACTION] Setting PRIVATE visibility → genesis-docs
+2025-11-24 18:12:43  [ACTION] Setting PUBLIC visibility → genesis-public
+2025-11-24 18:12:43  [ACTION] Setting PRIVATE visibility → genesis-assets
+2025-11-24 18:12:44  [ACTION] Setting PRIVATE visibility → genesis-mirror-scripts
+2025-11-24 18:12:45  [ACTION] Setting PRIVATE visibility → genesis-ci-templates
+2025-11-24 18:12:46  [ACTION] Setting PRIVATE visibility → genesis-release-manifest
+2025-11-24 18:12:46  [ACTION] Setting PRIVATE visibility → genesis-security-model
+2025-11-24 18:12:47  [ACTION] Setting PRIVATE visibility → genesis-backup-and-recovery
+2025-11-24 18:12:48  [ACTION] Setting PRIVATE visibility → genesis-infra
+2025-11-24 18:12:49  [ACTION] Setting PRIVATE visibility → genesis-services
+2025-11-24 18:12:49  [ACTION] Setting PRIVATE visibility → genesis-images
+2025-11-24 18:12:50  [ACTION] Setting PRIVATE visibility → genesis-minio-schema
+2025-11-24 18:12:51  [ACTION] Setting PRIVATE visibility → genesis-memory
+2025-11-24 18:12:51  [ACTION] Setting PRIVATE visibility → genesis-schemas
+2025-11-24 18:12:52  [ACTION] Setting PRIVATE visibility → genesis-skills
+2025-11-24 18:12:53  [ACTION] Setting PRIVATE visibility → genesis-agents
+2025-11-24 18:12:53  [ACTION] Setting PRIVATE visibility → genesis-supermonorepo
+2025-11-24 18:12:54  [INFO] Visibility correction phase complete.
+2025-11-24 18:12:54  [INFO] Setting team permissions (core-admins → admin)...
+2025-11-24 18:12:54  [ACTION] Grant admin to core-admins on genesis-lab
+2025-11-24 18:12:55  [ACTION] Grant admin to core-admins on genesis-docs
+2025-11-24 18:12:55  [ACTION] Grant admin to core-admins on genesis-public
+2025-11-24 18:12:56  [ACTION] Grant admin to core-admins on genesis-assets
+2025-11-24 18:12:56  [ACTION] Grant admin to core-admins on genesis-mirror-scripts
+2025-11-24 18:12:57  [ACTION] Grant admin to core-admins on genesis-ci-templates
+2025-11-24 18:12:58  [ACTION] Grant admin to core-admins on genesis-release-manifest
+2025-11-24 18:12:58  [ACTION] Grant admin to core-admins on genesis-security-model
+2025-11-24 18:12:59  [ACTION] Grant admin to core-admins on genesis-backup-and-recovery
+2025-11-24 18:12:59  [ACTION] Grant admin to core-admins on genesis-infra
+2025-11-24 18:13:00  [ACTION] Grant admin to core-admins on genesis-services
+2025-11-24 18:13:00  [ACTION] Grant admin to core-admins on genesis-images
+2025-11-24 18:13:01  [ACTION] Grant admin to core-admins on genesis-minio-schema
+2025-11-24 18:13:02  [ACTION] Grant admin to core-admins on genesis-memory
+2025-11-24 18:13:02  [ACTION] Grant admin to core-admins on genesis-schemas
+2025-11-24 18:13:03  [ACTION] Grant admin to core-admins on genesis-skills
+2025-11-24 18:13:04  [ACTION] Grant admin to core-admins on genesis-agents
+2025-11-24 18:13:04  [ACTION] Grant admin to core-admins on genesis-supermonorepo
+2025-11-24 18:13:05  [INFO] Team permissions updated.
+2025-11-24 18:13:05  [INFO] ================= Migration Complete (R3) ================
+2025-11-24 18:13:05  [INFO] Log saved to /opt/genesis/v70/migrate_v70.log
