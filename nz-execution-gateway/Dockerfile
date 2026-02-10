@@ -1,5 +1,4 @@
 FROM golang:1.21-alpine AS builder
-ENV GOSUMDB=off
 WORKDIR /app
 COPY app/go.mod app/go.sum ./
 RUN go mod download
