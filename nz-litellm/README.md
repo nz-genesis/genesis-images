@@ -1,5 +1,20 @@
 # nz-litellm
 
+## Build Model Confirmation
+
+This image follows the genesis-images build model:
+- **Build CI:** GitHub Actions only
+- **Registry:** ghcr.io/nz-genesis/nz-litellm
+- **Local builds:** For debugging only
+
+## Recovery Status
+
+- **Status:** ✅ RECOVERY_COMPLETE
+- **Remediation:** lightrag dependency intentionally removed
+- **Reason:** Known instability and incorrect previous assembly
+- **Approval:** Human Final Authority (2026-02-10)
+- **CI Run:** 21860377741 (SUCCESS)
+
 ## Remediation Status
 - **Status**: REMEDIATED
 - **Decision**: lightrag dependency intentionally removed
