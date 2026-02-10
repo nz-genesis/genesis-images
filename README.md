@@ -39,7 +39,8 @@ This repository follows a **registry-first forensic model** for recovery:
 | nz-litellm | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-litellm |
 | nz-mem0 | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-mem0 |
 | nz-intent-adapter | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-intent-adapter |
-| nz-stack-core | 🔲 Pending | ghcr.io/nz-genesis/nz-stack-core |
+| nz-execution-gateway | ❌ LOST | — |
+| nz-stack-core | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-stack-core |
 | genesis-core | 🔲 Pending | ghcr.io/nz-genesis/genesis-core |
 
 ## CI/CD
@@ -55,12 +56,14 @@ All builds are managed through GitHub Actions workflows in `.github/workflows/`:
 | nz-litellm | RECOVERY_COMPLETE | 2026-01-26 | Dependency fix only |
 | nz-mem0 | RECOVERY_COMPLETE | 2026-01-26 | API signature fixes |
 | nz-intent-adapter | RECOVERY_COMPLETE | 2026-02-10 | Phase 3.3 stub, legacy intent formation |
-| nz-stack-core | PENDING | — | — |
+| nz-execution-gateway | ❌ LOST | — | Declared LOST by Human Final Authority, no registry entry |
+| nz-stack-core | RECOVERY_COMPLETE | 2026-02-10 | Registry-first recovery from GHCR
 | genesis-core | PENDING | — | — |
 
-- **Total Images:** 5
-- **Completed:** 2 (nz-litellm, nz-mem0)
-- **Remaining:** 3
+- **Total Images:** 6
+- **Completed:** 3 (nz-litellm, nz-mem0, nz-intent-adapter)
+- **Lost:** 1 (nz-execution-gateway)
+- **Remaining:** 2
 
 ---
 
@@ -118,6 +121,7 @@ Each image MUST have one of the following statuses:
 - FORENSIC_COMPLETE (needs approval)
 - PENDING
 - BLOCKED
+- LOST
 
 Status must be reflected in both README and CI state.
 
@@ -167,6 +171,23 @@ Any other directories are forbidden and must be removed.
 - No CUDA removal
 
 **Trade-off:** Image size remains ~7.9 GB (optimization deferred)
+
+---
+
+## nz-execution-gateway
+
+**Status**: ❌ LOST
+
+**Reason**:
+- Image does not exist in GHCR (ghcr.io/nz-genesis/nz-execution-gateway)
+- No forensic source of truth available
+- Recovery is impossible
+
+**Human Decision**: Declared LOST by Human Final Authority
+
+**Actions Taken**:
+- Excluded from recovery scope
+- No rebuild or reimplementation attempted
 
 ---
 
