@@ -178,6 +178,10 @@ Any other directories are forbidden and must be removed.
 
 **CI Workflow**: [build-nz-execution-gateway.yml](.github/workflows/build-nz-execution-gateway.yml)
 
+**CI Run**: [21883083849](https://github.com/nz-genesis/genesis-images/actions/runs/21883083849) ✅ SUCCESS
+
+**Image Digest**: sha256:7aae9be...
+
 **Implementation Details**:
 - Full validation pipeline (Schema → Context → Intent → Security → Sandbox → Resources → State)
 - DENIAL_MATRIX rejection codes (R-CTX-XXX, R-INTENT-XXX, R-SCHEMA-XXX, R-SEC-XXX, R-SBX-XXX, R-RES-XXX, R-STATE-XXX)
@@ -187,8 +191,8 @@ Any other directories are forbidden and must be removed.
 
 **Verification**:
 - Docker build: SUCCESS
-- Container startup: VERIFIED (logs show "nz-execution-gateway starting on :8080")
-- Health endpoint: `/health` returns 200 OK
+- CI run: SUCCESS ✅
+- GHCR published: PENDING (propagation in progress)
 
 ---
 
