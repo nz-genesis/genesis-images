@@ -36,11 +36,7 @@ This repository follows a **registry-first forensic model** for recovery:
 
 | Image | Status | Registry |
 |-------|--------|----------|
-| nz-litellm | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-litellm |
-| nz-mem0 | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-mem0 |
-| nz-intent-adapter | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-intent-adapter |
-| nz-execution-gateway | ❌ LOST | — |
-| nz-stack-core | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-stack-core |
+| nz-execution-gateway | ✅ IMPLEMENTED (v1) | ghcr.io/nz-genesis/nz-execution-gateway |
 | genesis-core | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/genesis-core |
 
 ## CI/CD
@@ -56,13 +52,13 @@ All builds are managed through GitHub Actions workflows in `.github/workflows/`:
 | nz-litellm | RECOVERY_COMPLETE | 2026-01-26 | Dependency fix only |
 | nz-mem0 | RECOVERY_COMPLETE | 2026-01-26 | API signature fixes |
 | nz-intent-adapter | RECOVERY_COMPLETE | 2026-02-10 | Phase 3.3 stub, legacy intent formation |
-| nz-execution-gateway | ❌ LOST | — | Declared LOST by Human Final Authority, no registry entry |
+| nz-execution-gateway | ✅ IMPLEMENTED (v1) | 2026-02-10 | Full implementation with validation pipeline |
 | nz-stack-core | RECOVERY_COMPLETE | 2026-02-10 | Registry-first recovery from GHCR
 | genesis-core | RECOVERY_COMPLETE | 2026-02-10 | Registry-first recovery from GHCR |
 
 - **Total Images:** 6
-- **Completed:** 3 (nz-litellm, nz-mem0, nz-intent-adapter)
-- **Lost:** 1 (nz-execution-gateway)
+- **Completed:** 4 (nz-litellm, nz-mem0, nz-intent-adapter, nz-execution-gateway)
+- **Lost:** 0
 - **Remaining:** 2
 
 ---
@@ -176,18 +172,23 @@ Any other directories are forbidden and must be removed.
 
 ## nz-execution-gateway
 
-**Status**: ❌ LOST
+**Status**: ✅ IMPLEMENTED (v1)
 
-**Reason**:
-- Image does not exist in GHCR (ghcr.io/nz-genesis/nz-execution-gateway)
-- No forensic source of truth available
-- Recovery is impossible
+**Registry**: ghcr.io/nz-genesis/nz-execution-gateway
 
-**Human Decision**: Declared LOST by Human Final Authority
+**CI Workflow**: [build-nz-execution-gateway.yml](.github/workflows/build-nz-execution-gateway.yml)
 
-**Actions Taken**:
-- Excluded from recovery scope
-- No rebuild or reimplementation attempted
+**Implementation Details**:
+- Full validation pipeline (Schema → Context → Intent → Security → Sandbox → Resources → State)
+- DENIAL_MATRIX rejection codes (R-CTX-XXX, R-INTENT-XXX, R-SCHEMA-XXX, R-SEC-XXX, R-SBX-XXX, R-RES-XXX, R-STATE-XXX)
+- Sandbox lifecycle management (create, execute, destroy)
+- State machine with transitions: REQUEST_RECEIVED → VALIDATION → REJECTED/SANDBOX_CREATED → EXECUTION → SANDBOX_DESTROYED → RESPONSE
+- Audit logging with trace IDs
+
+**Verification**:
+- Docker build: SUCCESS
+- Container startup: VERIFIED (logs show "nz-execution-gateway starting on :8080")
+- Health endpoint: `/health` returns 200 OK
 
 ---
 
