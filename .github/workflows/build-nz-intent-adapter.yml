@@ -1,0 +1,36 @@
+name: Build nz-intent-adapter
+
+on:
+  push:
+    paths:
+      - 'nz-intent-adapter/**'
+      - '.github/workflows/build-nz-intent-adapter.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Build and push nz-intent-adapter
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nz-intent-adapter
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/nz-intent-adapter:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
