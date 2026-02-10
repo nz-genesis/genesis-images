@@ -6,7 +6,7 @@ SQLAlchemy + Qdrant for persistent and vector storage
 import json
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Optional
 
 from sqlalchemy import Column, String, Text, create_engine, select, desc
 from sqlalchemy.ext.declarative import declarative_base
@@ -82,6 +82,9 @@ class MemoryStore:
         session_id: str,
         key: str,
         value: Dict[str, Any],
+        ttl: Optional[int] = None,
+        embed: Optional[List[float]] = None,
+        trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Store a memory record.

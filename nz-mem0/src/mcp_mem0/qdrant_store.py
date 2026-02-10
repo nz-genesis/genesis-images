@@ -50,10 +50,14 @@ class QdrantStore:
 
     def search_vector(self, query_vector: List[float], limit: int = 5) -> List[Dict[str, Any]]:
         res = self.client.search(collection_name=self.collection_name, query_vector=query_vector, limit=limit)
-        # return simple list of {id, score}
+        # return list of {id, score, payload}
         out = []
         for hit in res:
-            out.append({"id": int(hit.id), "score": float(hit.score)})
+            out.append({
+                "id": int(hit.id), 
+                "score": float(hit.score),
+                "payload": hit.payload if hasattr(hit, 'payload') else {}
+            })
         return out
 
     def delete_vector(self, item_id: int):

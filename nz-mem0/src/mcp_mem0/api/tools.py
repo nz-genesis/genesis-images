@@ -13,13 +13,18 @@ class InvokeReq(BaseModel):
 @router.get("/")
 async def list_tools(request: Request):
     mcp = request.app.state.mcp
-    return {"status": "ok", "tools": mcp.list_tools()}
+    tools = mcp.get("tools", {})
+    return {"status": "ok", "tools": list(tools.keys())}
 
 @router.post("/invoke")
 async def invoke_tool(req: InvokeReq, request: Request):
     mcp = request.app.state.mcp
+    tools = mcp.get("tools", {})
     try:
-        res = mcp.invoke(req.tool, {**req.params, "trace_id": req.trace_id})
+        tool_func = tools.get(req.tool)
+        if tool_func is None:
+            raise KeyError(f"Tool '{req.tool}' not found")
+        res = tool_func(request.app.state.store, {**req.params, "trace_id": req.trace_id})
         return {"status": "ok", "result": res}
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))

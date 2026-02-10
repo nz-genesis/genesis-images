@@ -8,4 +8,4 @@ router = APIRouter()
 @router.get("/health")
 async def health():
     s = Settings()
-    return {"status": "ok", "service": "nz-mem0", "tz": s.TZ}
+    return {"status": "ok", "service": "nz-mem0"}
