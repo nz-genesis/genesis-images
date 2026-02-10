@@ -38,7 +38,7 @@ This repository follows a **registry-first forensic model** for recovery:
 |-------|--------|----------|
 | nz-litellm | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-litellm |
 | nz-mem0 | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-mem0 |
-| nz-intent-adapter | 🔲 Pending | ghcr.io/nz-genesis/nz-intent-adapter |
+| nz-intent-adapter | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-intent-adapter |
 | nz-stack-core | 🔲 Pending | ghcr.io/nz-genesis/nz-stack-core |
 | genesis-core | 🔲 Pending | ghcr.io/nz-genesis/genesis-core |
 
@@ -49,6 +49,14 @@ All builds are managed through GitHub Actions workflows in `.github/workflows/`:
 - `build-*.yml` — Image-specific build workflows
 
 ## Recovery Status
+
+| Image | Status | Last Published | Notes |
+|-------|--------|----------------|-------|
+| nz-litellm | RECOVERY_COMPLETE | 2026-01-26 | Dependency fix only |
+| nz-mem0 | RECOVERY_COMPLETE | 2026-01-26 | API signature fixes |
+| nz-intent-adapter | RECOVERY_COMPLETE | 2026-02-10 | Phase 3.3 stub, legacy intent formation |
+| nz-stack-core | PENDING | — | — |
+| genesis-core | PENDING | — | — |
 
 - **Total Images:** 5
 - **Completed:** 2 (nz-litellm, nz-mem0)
@@ -159,3 +167,39 @@ Any other directories are forbidden and must be removed.
 - No CUDA removal
 
 **Trade-off:** Image size remains ~7.9 GB (optimization deferred)
+
+---
+
+## nz-intent-adapter Canon Compliance Analysis
+
+**Status**: Phase 3.3 stub (заглушка)
+**Image**: ghcr.io/nz-genesis/nz-intent-adapter:latest
+**Digest**: sha256:90320a2c99fd4006c6b2b652cbe049ec8699ca5a77b8fd7d1e03eb43227ea1ae
+**Size**: 184 MB
+
+### Canon Alignment
+
+| Canon Requirement | Implementation | Classification |
+|------------------|---------------|----------------|
+| Health endpoint (/health) | ✅ Match | — |
+| Port 8080 | ✅ Match | — |
+| Subject authentication | ⚠️ Deviation | ENGINEERING_DEBT |
+| Tenant resolution | ⚠️ Deviation | ENGINEERING_DEBT |
+| Context collection | ⚠️ Deviation | ENGINEERING_DEBT |
+| INTENT formation | ⚠️ Deviation | LEGACY_DEVIATION |
+| Stack Core integration | ⚠️ Deviation | ENGINEERING_DEBT |
+
+### Classification Summary
+
+- **CANON_VIOLATION**: 0
+- **ENGINEERING_DEBT**: 5 (missing features)
+- **LEGACY_DEVIATION**: 1 (INTENT stub)
+
+### STOP Conditions
+
+- Requires architectural decision: NO
+- Canon interpretation ambiguous: NO
+
+### Recommendation
+
+Image is functional Phase 3.3 stub. Full canon compliance requires explicit upgrade decision from Human.
