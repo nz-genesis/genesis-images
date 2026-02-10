@@ -1,0 +1,37 @@
+# nz-mem0 Python Dependencies
+# RECOVERED from forensic analysis of published image: ghcr.io/nz-genesis/nz-mem0:latest
+# Version: 0.1.0
+# See README.md for version notes
+
+# Core Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Data Validation & Settings
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database
+SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9
+
+# Vector Database
+qdrant-client==1.7.0
+
+# Numerical Computing
+numpy==1.24.3
+
+# Sentence Transformers (for embeddings)
+# NOTE: sentence-transformers was NOT installed in the original 7.9 GB image
+# but torch was installed. This is a critical bug.
+# Install sentence-transformers for proper embeddings:
+sentence-transformers==2.2.2
+
+# Redis (optional, for caching)
+redis==5.0.1
+
+# HTTP Client
+httpx==0.25.2
+
+# Environment Variables
+python-dotenv==1.0.0
