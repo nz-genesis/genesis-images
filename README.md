@@ -41,7 +41,7 @@ This repository follows a **registry-first forensic model** for recovery:
 | nz-intent-adapter | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-intent-adapter |
 | nz-execution-gateway | ❌ LOST | — |
 | nz-stack-core | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/nz-stack-core |
-| genesis-core | 🔲 Pending | ghcr.io/nz-genesis/genesis-core |
+| genesis-core | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/genesis-core |
 
 ## CI/CD
 
@@ -58,7 +58,7 @@ All builds are managed through GitHub Actions workflows in `.github/workflows/`:
 | nz-intent-adapter | RECOVERY_COMPLETE | 2026-02-10 | Phase 3.3 stub, legacy intent formation |
 | nz-execution-gateway | ❌ LOST | — | Declared LOST by Human Final Authority, no registry entry |
 | nz-stack-core | RECOVERY_COMPLETE | 2026-02-10 | Registry-first recovery from GHCR
-| genesis-core | PENDING | — | — |
+| genesis-core | RECOVERY_COMPLETE | 2026-02-10 | Registry-first recovery from GHCR |
 
 - **Total Images:** 6
 - **Completed:** 3 (nz-litellm, nz-mem0, nz-intent-adapter)
