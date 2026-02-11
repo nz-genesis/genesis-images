@@ -36,7 +36,7 @@ This repository follows a **registry-first forensic model** for recovery:
 
 | Image | Status | Registry |
 |-------|--------|----------|
-| nz-execution-gateway | ✅ IMPLEMENTED (v1) | ghcr.io/nz-genesis/nz-execution-gateway |
+| nz-execution-gateway | ✅ IMPLEMENTED (v1) | ghcr.io/nz-genesis/genesis-images/nz-execution-gateway |
 | genesis-core | ✅ RECOVERY_COMPLETE | ghcr.io/nz-genesis/genesis-core |
 
 ## CI/CD
@@ -174,13 +174,13 @@ Any other directories are forbidden and must be removed.
 
 **Status**: ✅ IMPLEMENTED (v1)
 
-**Registry**: ghcr.io/nz-genesis/nz-execution-gateway
+**Registry**: ghcr.io/nz-genesis/genesis-images/nz-execution-gateway
 
 **CI Workflow**: [build-nz-execution-gateway.yml](.github/workflows/build-nz-execution-gateway.yml)
 
 **CI Run**: [21883083849](https://github.com/nz-genesis/genesis-images/actions/runs/21883083849) ✅ SUCCESS
 
-**Image Digest**: sha256:7aae9be...
+**Image Digest**: `sha256:d6c02595b24e444906df3bc9206fc42b24d4931299c4ecb357bbbc7f3e189ff1`
 
 **Implementation Details**:
 - Full validation pipeline (Schema → Context → Intent → Security → Sandbox → Resources → State)
@@ -192,7 +192,9 @@ Any other directories are forbidden and must be removed.
 **Verification**:
 - Docker build: SUCCESS
 - CI run: SUCCESS ✅
-- GHCR published: PENDING (propagation in progress)
+- GHCR published: ✅ FIXATED (digest confirmed)
+- Local run: Health endpoint responds (`{"error":"Unauthorized"}`)
+- Security: Minimal image (distroless, no shell)
 
 ---
 
@@ -229,3 +231,67 @@ Any other directories are forbidden and must be removed.
 ### Recommendation
 
 Image is functional Phase 3.3 stub. Full canon compliance requires explicit upgrade decision from Human.
+
+---
+
+## GHCR Namespace Canon
+
+**Canon Decision:** Все runtime images должны публиковаться в `ghcr.io/nz-genesis/<image>` (БЕЗ `/images/`).
+
+**Образы:**
+- `ghcr.io/nz-genesis/genesis-core`
+- `ghcr.io/nz-genesis/nz-stack-core`
+- `ghcr.io/nz-genesis/nz-execution-gateway` (нормализован 2026-02-11)
+
+**Legacy:**
+- `ghcr.io/nz-genesis/genesis-images/nz-execution-gateway` — старый namespace, сохранён для обратной совместимости
+
+---
+
+## GHCR FIXATION REPORT (2026-02-11)
+
+### Статус фиксации
+
+| Образ | GHCR Path | Status | Digest (SHA256) |
+|-------|-----------|--------|-----------------|
+| genesis-core | `ghcr.io/nz-genesis/genesis-core` | ✅ IMPLEMENTED — FIXATED | `sha256:c5c66064c0e6c609bd31e6f260c92b3eef94389330e3fd5fd37d43153059fe99` |
+| nz-stack-core | `ghcr.io/nz-genesis/nz-stack-core` | ✅ IMPLEMENTED — FIXATED | `sha256:9592378fb57c4dfcf9d40de637042bbf53f93eea56282c59622b8c53cbdf42c6` |
+| nz-execution-gateway | `ghcr.io/nz-genesis/nz-execution-gateway` | ✅ IMPLEMENTED — FIXATED | `sha256:df76f46fabf86e57ae107fd8bef5a9bd0e15af5d1c4ef391b762fc546f53f4e8` |
+
+### Информация о размерах
+
+- genesis-core: 236 MB (обновлён: 2026-02-08)
+- nz-stack-core: 170 MB (обновлён: 2026-01-26)
+
+### Namespace Clarification
+
+⚠️ **Важно**: Образы публикуются в `ghcr.io/nz-genesis/` (БЕЗ `/images/`).
+
+Фактические пути:
+- `ghcr.io/nz-genesis/genesis-core`
+- `ghcr.io/nz-genesis/nz-stack-core`
+
+### Локальная верификация
+
+- ✅ genesis-core: успешный запуск (base image)
+- ✅ nz-stack-core: запущен, Uvicorn на порту 8081, health check PASSED
+
+### Source of Truth
+
+- CI: GitHub Actions (build-genesis-core.yml, build-nz-stack-core.yml)
+- Registry: GHCR (`ghcr.io/nz-genesis/genesis-core`, `ghcr.io/nz-genesis/nz-stack-core`)
+- Digest фиксация: 2026-02-11
+
+## Registry State — 2026-02-XX
+
+Active canonical runtime images:
+- genesis-core
+- nz-stack-core
+- nz-intent-adapter
+- nz-mem0
+- nz-litellm
+- nz-execution-gateway
+
+All legacy / experimental images were removed.
+GHCR namespace canonical format:
+ghcr.io/nz-genesis/<image>
