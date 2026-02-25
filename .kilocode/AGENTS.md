@@ -1,7 +1,7 @@
 # Genesis Images — AGENTS.md
 
 **ACTIVE_MODE:** EXTERNAL
-**MODE_SOURCE:** .kilocode/modes/EXTERNAL.mode.md
+**MODE_SOURCE:** /root/.kilocode/modes/external.mode.md
 **Тип:** Docker/ML образы
 
 ---
